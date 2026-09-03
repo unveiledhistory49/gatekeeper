@@ -1,0 +1,30 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+env:
+  GOTOOLCHAIN: local
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.23"
+          cache: true
+      - name: gofmt
+        run: |
+          out=$(gofmt -l .)
+          if [ -n "$out" ]; then echo "unformatted files:"; echo "$out"; exit 1; fi
+      - run: go vet ./...
+      - run: go build ./...
+      - run: go test ./... -count=1
+      - name: govulncheck
+        run: |
+          # @latest avoids pinning a version that may not exist; tradeoff: less reproducible.
+          go install golang.org/x/vuln/cmd/govulncheck@latest
+          govulncheck ./...

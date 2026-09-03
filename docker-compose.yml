@@ -1,0 +1,34 @@
+services:
+  api:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      GATEKEEPER_DATABASE_URL: sqlite://./data/gatekeeper.db
+      GATEKEEPER_ADDR: :8080
+      # GATEKEEPER_PEPPER: change-me-in-production
+    volumes:
+      - ./data:/app/data
+    working_dir: /app
+    command: ["serve"]
+    # No healthcheck: debian:bookworm-slim ships neither curl nor wget and the
+    # CLI has no health subcommand, so nothing in-image can probe /healthz.
+    # Probe http://localhost:8080/healthz from the host/orchestrator instead.
+
+  # Optional Postgres. Switching needs no code change: db.Open selects the
+  # pgx driver from the URL scheme (postgres://...), sqlite otherwise.
+  # To use: uncomment, then set
+  #   GATEKEEPER_DATABASE_URL=postgres://gatekeeper:gatekeeper@db:5432/gatekeeper?sslmode=disable
+  # db:
+  #   image: postgres:16
+  #   environment:
+  #     POSTGRES_USER: gatekeeper
+  #     POSTGRES_PASSWORD: gatekeeper
+  #     POSTGRES_DB: gatekeeper
+  #   volumes:
+  #     - pgdata:/var/lib/postgresql/data
+  #   ports:
+  #     - "5432:5432"
+
+# volumes:
+#   pgdata:
